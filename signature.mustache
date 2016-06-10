@@ -1,0 +1,21 @@
+
+{{makeHeading}} `{{{makeSignature code}}}`
+{{{makeLinks description}}}
+{{#if params}}
+
+{{#params}}
+1. {{{makeParams}}}:
+{{{indent (makeLinks description) 2}}}
+{{/params}}
+{{/if}}
+{{#returns}}
+
+- __returns__ {{{makeReturn}}}:
+{{{indent (makeLinks description) 2}}}
+{{/returns}}
+{{#if options.length}}
+{{#options}}
+- __{{name}}__ {{#if types}}<code>{{{makeTypesString types}}}</code>{{/if}}:
+{{{indent (makeLinks description) 2}}}
+{{/options}}
+{{/if}}

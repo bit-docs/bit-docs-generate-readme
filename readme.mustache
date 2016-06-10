@@ -1,0 +1,14 @@
+
+{{#entities}}
+{{indent}}- {{{linkToSignature}}}
+{{/entities}}
+
+## API
+
+{{#entities}}
+{{#if isTyped}}
+{{>types.mustache}}
+{{else}}
+{{>signature.mustache}}
+{{/if}}
+{{/entities}}
