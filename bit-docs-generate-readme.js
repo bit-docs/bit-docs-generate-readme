@@ -11,15 +11,27 @@ var makeHelpers = require("./helpers");
 
 module.exports = function(docMapPromise, siteConfig){
 
+    var apisPromise;
+    if( Array.isArray(siteConfig.readme.apis) ) {
+        apisPromise = Q(siteConfig.readme.apis);
+    } else {
+        var apisPath = path.join( siteConfig.cwd, siteConfig.readme.apis);
+        apisPromise = readFile( apisPath ).then(function(apisSource){
+            return JSON.parse(""+apisSource);
+        });
+    }
+
     return Q.all([
         docMapPromise,
         readFile( path.join( __dirname,'readme.mustache') ),
         readFile( path.join( __dirname,'signature.mustache') ),
-        readFile( path.join( __dirname,'types.mustache') )
+        readFile( path.join( __dirname,'types.mustache') ),
+        apisPromise
     ]).then(function(result){
 
         var template = Handlebars.compile(result[1].toString()),
-            docMap = _.cloneDeep( result[0] );
+            docMap = _.cloneDeep( result[0] ),
+            apis = reseult[4];
 
 
         Handlebars.registerPartial("signature.mustache", result[2].toString());
@@ -30,7 +42,7 @@ module.exports = function(docMapPromise, siteConfig){
             Handlebars.registerHelper(helperName, helper);
         });
 
-        var entities = makeDocEntities(siteConfig.readme.apis,0,docMap);
+        var entities = makeDocEntities(apis,0,docMap);
 
         var out = template({
             entities: entities
