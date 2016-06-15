@@ -31,7 +31,7 @@ module.exports = function(docMapPromise, siteConfig){
 
         var template = Handlebars.compile(result[1].toString()),
             docMap = _.cloneDeep( result[0] ),
-            apis = reseult[4];
+            apis = result[4];
 
 
         Handlebars.registerPartial("signature.mustache", result[2].toString());
