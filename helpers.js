@@ -54,18 +54,21 @@ module.exports = function(docMap, siteConfig){
 
     var helpers = {
         "linkToSignature":function(){
-            var moduleCode = "";
 
-            if(this.type === "module") {
-                moduleCode = "__"+this.name+"__ ";
-            } else if(this.docObject && this.docObject.type === "module") {
-                moduleCode = "__"+this.docObject.name+"__ ";
-            }
             if(this.code) {
-                return "<code>["+moduleCode+this.code+"](#"+toHash(this.code)+")"+"</code>";
+                return "<code>["+this.code+"](#"+toHash(this.code)+")"+"</code>";
             } else if(this.types) {
-                var title = this.title+" "+helpers.makeTypes(this.types);
-                return "<code>["+moduleCode+title+"](#"+toHash(title)+")"+"</code>";
+                var types = helpers.makeTypes(this.types);
+                var title,
+                    link;
+                if(this.type === "module") {
+                    title = "__"+this.name+"__ "+types;
+                    link = this.name +" "+ types;
+                } else {
+                    title = this.title+" "+types;
+                    link = title;
+                }
+                return "<code>["+title+"](#"+toHash(link)+")"+"</code>";
             } else if(this.type === "group") {
                 return "_"+this.name+"_";
             }
@@ -88,15 +91,27 @@ module.exports = function(docMap, siteConfig){
         "makeHeading": function(){
             var depth = this.depth || (this.docObject && this.docObject.depth) || 0;
 
-            return new Array(depth+4).join("#");
+            return new Array(depth+3).join("#");
         },
         "makeSignature": function(code){
+
             if(code){
 				return code;
 			}
 
 			var sig = "";
-			// if it's a constructor add new
+            if(this.type === "module") {
+                sig = "__"+this.name+"__ ";
+            }
+            if(this.types) {
+                return sig + helpers.makeTypes(this.types);
+            }
+
+            if(! /function|constructor/i.test(this.type) && !this.params && !this.returns){
+				return sig + helpers.makeType(this);
+			}
+
+            // if it's a constructor add new
 			if(this.type === "constructor"){
 				sig += "new "
 			}
@@ -116,9 +131,8 @@ module.exports = function(docMap, siteConfig){
 			} else {
 				sig += "function";
 			}
-			if(! /function|constructor/i.test(this.type) && !this.params && !this.returns){
-				return helpers.makeType(this);
-			}
+
+
 			sig+="("+helpers.makeParamsString(this.params)+")";
 
 			// now get the params

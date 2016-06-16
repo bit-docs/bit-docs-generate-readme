@@ -74,6 +74,45 @@ function getDepth (name, docMap) {
     return depth;
 }
 
+function makeDocEntity(name, depth, docMap, ignoreGroups) {
+    var entities = [];
+
+    var docObject = docMap[name];
+    if(!docObject) {
+        docObject = {type: "group", name: name};
+    } else {
+        docObject = _.cloneDeep(docObject);
+    }
+
+    docObject.depth = depth;
+    if(docObject.signatures) {
+        if(docObject.type === "module") {
+            entities.push(docObject)
+        }
+        depth++;
+        docObject.signatures.forEach(function(signature){
+            entities.push(signature);
+            signature.depth = depth;
+            signature.docObject = docObject;
+        });
+    } else if( docObject.types ) {
+        docObject.isTyped = true;
+        entities.push(docObject);
+
+        docObject.types.forEach(function(type){
+            type.depth = depth+1;
+        });
+
+    } else if(docObject.type === "group") {
+        if(!ignoreGroups) {
+            entities.push(docObject);
+        }
+    } else {
+        console.log("unable to process",docObject);
+    }
+
+    return {entities: entities, depth: depth};
+}
 
 function makeDocEntities(apis, depth, docMap, ignoreGroups) {
     var entities = [];
@@ -85,40 +124,16 @@ function makeDocEntities(apis, depth, docMap, ignoreGroups) {
                 if(isGroup && ignoreGroups) {
                     entities.push.apply(entities, makeDocEntities(apis, depth, docMap, ignoreGroups) );
                 } else {
-                    entities.push.apply(entities, makeDocEntities([name],depth, docMap, ignoreGroups) );
-                    entities.push.apply(entities, makeDocEntities(apis, depth+1, docMap, ignoreGroups) );
+                    var result = makeDocEntity(name, depth, docMap, ignoreGroups);
+                    entities.push.apply(entities, result.entities );
+                    entities.push.apply(entities, makeDocEntities(apis, result.depth+1, docMap, ignoreGroups) );
                 }
 
             });
         } else {
-            var docObject = docMap[name];
-            if(!docObject) {
-                docObject = {type: "group", name: name};
-            } else {
-                docObject = _.cloneDeep(docObject);
-            }
-
-            docObject.depth = depth;
-            if(docObject.signatures) {
-                docObject.signatures.forEach(function(signature){
-                    entities.push(signature);
-                    signature.docObject = docObject;
-                });
-            } else if( docObject.types ) {
-                docObject.isTyped = true;
-                entities.push(docObject);
-
-                docObject.types.forEach(function(type){
-                    type.depth = depth+1;
-                });
-
-            } else if(docObject.type === "group") {
-                if(!ignoreGroups) {
-                    entities.push(docObject);
-                }
-            } else {
-                console.log("unable to process",docObject);
-            }
+            // make one docObject's entities
+            var result = makeDocEntity(name, depth, docMap, ignoreGroups);
+            entities.push.apply(entities, result.entities);
         }
 
     });
