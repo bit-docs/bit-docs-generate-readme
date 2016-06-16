@@ -50,7 +50,7 @@ module.exports = function(docMapPromise, siteConfig){
             outlineEntities: outlineEntities,
             entities: entities
         });
-        writeFile(path.join(siteConfig.dest,"docMap.json"), JSON.stringify(result[0]));
+        //writeFile(path.join(siteConfig.dest,"docMap.json"), JSON.stringify(result[0]));
 
         return writeFile(path.join(siteConfig.dest,"GREADME.md"), out)
     });
@@ -87,13 +87,17 @@ function makeDocEntity(name, depth, docMap, ignoreGroups) {
     docObject.depth = depth;
     if(docObject.signatures) {
         if(docObject.type === "module") {
-            entities.push(docObject)
+            entities.push(docObject);
+            // only increase the depth for the signatures we will add under this module
+            if(docObject.signatures.length) {
+                depth++;
+            }
         }
-        depth++;
+
         docObject.signatures.forEach(function(signature){
             entities.push(signature);
             signature.depth = depth;
-            signature.docObject = docObject;
+            //signature.docObject = docObject;
         });
     } else if( docObject.types ) {
         docObject.isTyped = true;
