@@ -10,7 +10,7 @@ var makeHelpers = require("./helpers");
 
 
 module.exports = function(docMapPromise, siteConfig){
-
+    siteConfig = _.cloneDeep(siteConfig);
     var apisPromise;
     if( Array.isArray(siteConfig.readme.apis) ) {
         apisPromise = Q(siteConfig.readme.apis);
@@ -30,21 +30,24 @@ module.exports = function(docMapPromise, siteConfig){
     ]).then(function(result){
 
         var template = Handlebars.compile(result[1].toString()),
-            docMap = _.cloneDeep( result[0] ),
+            docMap = result[0],
             apis = result[4];
 
+        siteConfig.readme.apis = apis;
 
         Handlebars.registerPartial("signature.mustache", result[2].toString());
         Handlebars.registerPartial("types.mustache", result[3].toString());
 
-        var helpers = makeHelpers(docMap);
+        var helpers = makeHelpers(docMap, siteConfig);
         _.forEach(helpers, function(helper, helperName){
             Handlebars.registerHelper(helperName, helper);
         });
 
-        var entities = makeDocEntities(apis,0,docMap);
+        var outlineEntities = makeDocEntities(apis,0,docMap);
+        var entities = makeDocEntities(apis,0,docMap, true);
 
         var out = template({
+            outlineEntities: outlineEntities,
             entities: entities
         });
         writeFile(path.join(siteConfig.dest,"docMap.json"), JSON.stringify(result[0]));
@@ -72,17 +75,28 @@ function getDepth (name, docMap) {
 }
 
 
-function makeDocEntities(apis, depth, docMap) {
+function makeDocEntities(apis, depth, docMap, ignoreGroups) {
     var entities = [];
 
     apis.forEach(function(name){
         if(typeof name !== "string") {
             _.forEach(name, function(apis, name){
-                entities.push.apply(entities, makeDocEntities([name],depth, docMap) );
-                entities.push.apply(entities, makeDocEntities(apis, depth+1, docMap) );
+                var isGroup = !docMap[name] || (docMap[name] && docMap[name].type === "group");
+                if(isGroup && ignoreGroups) {
+                    entities.push.apply(entities, makeDocEntities(apis, depth, docMap, ignoreGroups) );
+                } else {
+                    entities.push.apply(entities, makeDocEntities([name],depth, docMap, ignoreGroups) );
+                    entities.push.apply(entities, makeDocEntities(apis, depth+1, docMap, ignoreGroups) );
+                }
+
             });
         } else {
             var docObject = docMap[name];
+            if(!docObject) {
+                docObject = {type: "group", name: name};
+            } else {
+                docObject = _.cloneDeep(docObject);
+            }
 
             docObject.depth = depth;
             if(docObject.signatures) {
@@ -98,6 +112,10 @@ function makeDocEntities(apis, depth, docMap) {
                     type.depth = depth+1;
                 });
 
+            } else if(docObject.type === "group") {
+                if(!ignoreGroups) {
+                    entities.push(docObject);
+                }
             } else {
                 console.log("unable to process",docObject);
             }

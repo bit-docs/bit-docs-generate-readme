@@ -1,4 +1,4 @@
-module.exports = function(docMap){
+module.exports = function(docMap, siteConfig){
 
     function toHash(str) {
         return str && str.replace(/\s/g,"-").replace(/[^\w-]/g,"").toLowerCase();
@@ -21,7 +21,7 @@ module.exports = function(docMap){
             return title || name || "";
         }
     };
-    
+
     var linksRegExp = /[\[](.*?)\]/g,
     	linkRegExp = /^(\S+)\s*(.*)/,
     	httpRegExp = /^http/;
@@ -54,11 +54,20 @@ module.exports = function(docMap){
 
     var helpers = {
         "linkToSignature":function(){
+            var moduleCode = "";
+
+            if(this.type === "module") {
+                moduleCode = "__"+this.name+"__ ";
+            } else if(this.docObject && this.docObject.type === "module") {
+                moduleCode = "__"+this.docObject.name+"__ ";
+            }
             if(this.code) {
-                return "<code>["+this.code+"](#"+toHash(this.code)+")"+"</code>";
+                return "<code>["+moduleCode+this.code+"](#"+toHash(this.code)+")"+"</code>";
             } else if(this.types) {
                 var title = this.title+" "+helpers.makeTypes(this.types);
-                return "<code>["+title+"](#"+toHash(title)+")"+"</code>";
+                return "<code>["+moduleCode+title+"](#"+toHash(title)+")"+"</code>";
+            } else if(this.type === "group") {
+                return "_"+this.name+"_";
             }
 
         },

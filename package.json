@@ -1,6 +1,6 @@
 {
   "name": "bit-docs-generate-readme",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "Generates a readme from other docs",
   "main": "bit-docs-generate-readme.js",
   "dependencies": {
