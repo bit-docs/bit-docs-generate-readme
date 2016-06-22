@@ -164,7 +164,6 @@ module.exports = function(docMap, siteConfig){
 				//if(this.defaultValue){
 				//	txt+="="+this.defaultValue
 				//}
-				console.log(txt,link);
 				return txt+"}";
 			} else {
 				return '';
