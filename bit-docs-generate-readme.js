@@ -51,7 +51,6 @@ module.exports = function(docMapPromise, siteConfig){
             entities: entities
         });
         //writeFile(path.join(siteConfig.dest,"docMap.json"), JSON.stringify(result[0]));
-
         return writeFile(path.join(siteConfig.dest,"GREADME.md"), out)
     });
 };
