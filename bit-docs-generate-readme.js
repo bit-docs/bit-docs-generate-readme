@@ -6,8 +6,7 @@ var readFile = Q.denodeify(fs.readFile),
 var _ = require("lodash");
 var Handlebars = require("handlebars").create();
 var makeHelpers = require("./helpers");
-
-
+var mkdir = Q.denodeify(fs.mkdir);
 
 module.exports = function(docMapPromise, siteConfig){
     siteConfig = _.cloneDeep(siteConfig);
@@ -52,7 +51,9 @@ module.exports = function(docMapPromise, siteConfig){
         });
         //writeFile(path.join(siteConfig.dest,"docMap.json"), JSON.stringify(result[0]));
 
-        return writeFile(path.join(siteConfig.dest,"GREADME.md"), out)
+        return mkdir(siteConfig.dest).then(function(){
+          return writeFile(path.join(siteConfig.dest,"GREADME.md"), out)
+        });
     });
 };
 
