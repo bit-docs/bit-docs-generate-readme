@@ -1,7 +1,9 @@
-{{makeHeading}} {{title}} {{#if types}}`{{{makeTypesString types}}}`{{/if}}
+{{makeHeading}} {{titleOrName}} {{#if types}}`{{{makeTypesString types false}}}`{{/if}}
 
 {{{makeLinks description}}}
 
 {{#types}}
+{{#if description}}
 {{> signature.mustache}}
+{{/if}}
 {{/types}}

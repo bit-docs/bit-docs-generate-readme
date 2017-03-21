@@ -3,7 +3,22 @@ module.exports = function(docMap, siteConfig){
     function toHash(str) {
         return str && str.replace(/\s/g,"-").replace(/[^\w-]/g,"").toLowerCase();
     }
+    var titleTo = function(name, title) {
+        if (!name) return (title || "");
+        name = name.replace('::', '.prototype.');
+        var docObject = docMap[name];
+        if (docObject ) {
+            if( docObject.signatures ) {
+                // link to the first signature
+                return (title || name );
+            } else if(docObject.types) {
+                return (title || docObject.title || name );
+            }
 
+        } else {
+            return title || name || "";
+        }
+    }
     var linkTo = function(name, title){
         if (!name) return (title || "");
         name = name.replace('::', '.prototype.');
@@ -58,14 +73,14 @@ module.exports = function(docMap, siteConfig){
             if(this.code) {
                 return "<code>["+this.code+"](#"+toHash(this.code)+")"+"</code>";
             } else if(this.types) {
-                var types = helpers.makeTypes(this.types);
+                var types = helpers.makeTypes(this.types, false);
                 var title,
                     link;
                 if(this.type === "module") {
                     title = "__"+this.name+"__ "+types;
                     link = this.name +" "+ types;
                 } else {
-                    title = this.title+" "+types;
+                    title = (this.title || this.name)+" "+types;
                     link = title;
                 }
                 return "<code>["+title+"](#"+toHash(link)+")"+"</code>";
@@ -133,7 +148,7 @@ module.exports = function(docMap, siteConfig){
 			}
 
 
-			sig+="("+helpers.makeParamsString(this.params)+")";
+			sig+="("+helpers.makeParamsString(this.params, false)+")";
 
 			// now get the params
 
@@ -141,10 +156,11 @@ module.exports = function(docMap, siteConfig){
 
 			return sig;
         },
-        makeTypesString: function (types) {
+        makeTypesString: function (types, link) {
+
 			if (types && types.length) {
 				// turns [{type: 'Object'}, {type: 'String'}] into '{Object | String}'
-				var txt = "{"+helpers.makeTypes(types);
+				var txt = "{"+helpers.makeTypes(types, link);
 				//if(this.defaultValue){
 				//	txt+="="+this.defaultValue
 				//}
@@ -153,14 +169,14 @@ module.exports = function(docMap, siteConfig){
 				return '';
 			}
 		},
-        makeType: function (t) {
+        makeType: function (t, link) {
 			if(t.type === "function"){
 				var fn = t.params && t.params.length ?
-                    "("+helpers.makeParamsString(t.params)+")" : "";
+                    "("+helpers.makeParamsString(t.params, link)+")" : "";
 
 				if(t.constructs && t.constructs.types){
 					fn = "constructor"+fn;
-					fn += " => "+helpers.makeTypes(t.constructs.types)
+					fn += " => "+helpers.makeTypes(t.constructs.types, link)
 				} else {
 					fn = "function"+fn;
 				}
@@ -169,11 +185,12 @@ module.exports = function(docMap, siteConfig){
 			}
 			var type = docMap[t.type];
 			var title = type && type.title || undefined;
-			var txt = linkTo(t.type, title);
+
+			var txt = link !== false ? linkTo(t.type, title) : titleTo(t.type, title);
 
 			if(t.template && t.template.length){
 				txt += "\\<"+t.template.map(function(templateItem){
-					return helpers.makeTypes(templateItem.types)
+					return helpers.makeTypes(templateItem.types, link)
 				}).join(",")+"\\>";
 			}
 			if(type){
@@ -183,29 +200,36 @@ module.exports = function(docMap, siteConfig){
 					var params = type.types[0].params;
 				}
 				if(params){
-					txt += "("+helpers.makeParamsString(params)+")";
+					txt += "("+helpers.makeParamsString(params, link)+")";
 				}
 			}
 
 			return txt;
 		},
-		makeTypes: function(types){
+		makeTypes: function(types, link){
 			if (types.length) {
 				// turns [{type: 'Object'}, {type: 'String'}] into '{Object | String}'
-				return types.map(helpers.makeType).join('|');
+				return types.map(function(type){
+                    return helpers.makeType(type, link)
+                }).join('|');
 			} else {
 				return '';
 			}
 		},
-        makeParamsString: function(params){
+        makeParamsString: function(params, link){
             if(!params || !params.length){
                 return "";
             }
             return params.map(function(param){
                 // try to look up the title
                 var type = param.types && param.types[0] && param.types[0].type
-                return linkTo(type, param.name) +
-                    ( param.variable ? "..." : "" );
+                if(link !== false ) {
+                    return linkTo(type, param.name) +
+                        ( param.variable ? "..." : "" );
+                } else {
+                    return titleTo(type, param.name) + ( param.variable ? "..." : "" )
+                }
+
             }).join(", ");
         },
         indent: function(content, spaces){
@@ -222,6 +246,9 @@ module.exports = function(docMap, siteConfig){
         },
         makeLinks: function(text) {
             return replaceLinks(text);
+        },
+        titleOrName: function(){
+            return this.title || this.name;
         }
     };
 
