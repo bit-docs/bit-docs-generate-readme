@@ -22,9 +22,9 @@ module.exports = function(docMapPromise, siteConfig){
 
     return Q.all([
         docMapPromise,
-        readFile( path.join( __dirname,'readme.mustache') ),
-        readFile( path.join( __dirname,'signature.mustache') ),
-        readFile( path.join( __dirname,'types.mustache') ),
+        readFile( path.join( __dirname, 'templates', 'readme.mustache') ),
+        readFile( path.join( __dirname, 'templates', 'signature.mustache') ),
+        readFile( path.join( __dirname, 'templates', 'types.mustache') ),
         apisPromise
     ]).then(function(result){
 
